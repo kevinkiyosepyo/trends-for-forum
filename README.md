@@ -1,4 +1,4 @@
-# Trends for Forum
+# Trends for Forum: https://trends-for-forum.vercel.app/
 
 An AI-powered trend detection agent that identifies emerging internet trends before [Forum](https://forum.market) (YC W26) prices them in.
 
