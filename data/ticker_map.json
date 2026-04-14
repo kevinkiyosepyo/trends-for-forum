@@ -1,0 +1,15 @@
+{
+  "openai": "OPENAI",
+  "chatgpt": "OPENAI",
+  "gpt-4": "OPENAI",
+  "gpt-5": "OPENAI",
+  "anthropic": "ANTHROPIC",
+  "claude": "ANTHROPIC",
+  "google": "GOOGLE",
+  "gemini": "GOOGLE",
+  "microsoft": "MSFT",
+  "apple": "AAPL",
+  "meta": "META",
+  "bitcoin": "BTC",
+  "ethereum": "ETH"
+}
