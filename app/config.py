@@ -11,7 +11,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
 # Model selection
 # Opus for rich per-topic explanations (called once per topic)
 # Haiku for anything bulk / fast / cheap
-ANTHROPIC_MAIN_MODEL = "claude-opus-4-6"
+ANTHROPIC_MAIN_MODEL = "claude-haiku-4-5-20251001"
 ANTHROPIC_FAST_MODEL = "claude-haiku-4-5-20251001"
 OPENAI_MAIN_MODEL = "gpt-4o"
 OPENAI_FAST_MODEL = "gpt-4o-mini"

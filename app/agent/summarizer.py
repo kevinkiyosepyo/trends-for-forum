@@ -11,19 +11,9 @@ from app.agent.recommender import signal_label
 
 
 def summarize_topic(scored: dict) -> str:
+    """Fast rule-based summary for cards — no LLM, no latency."""
     if scored.get("insufficient_data"):
         return f"Cannot assess {scored['topic']} — no data available from Google Trends or Forum."
-
-    # Prefer the configured provider, but fall through to whichever key is actually set
-    if LLM_PROVIDER == "anthropic" and ANTHROPIC_API_KEY:
-        return _summarize_anthropic(scored)
-    if LLM_PROVIDER == "openai" and OPENAI_API_KEY:
-        return _summarize_openai(scored)
-    # Auto-detect fallback
-    if ANTHROPIC_API_KEY:
-        return _summarize_anthropic(scored)
-    if OPENAI_API_KEY:
-        return _summarize_openai(scored)
     return _summarize_fallback(scored)
 
 
