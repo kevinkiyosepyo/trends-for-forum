@@ -208,6 +208,30 @@ def _fetch_pytrends(topic: str, attempt: int = 0) -> dict:
         return _failed_signal(topic, err[:80])
 
 
+def fetch_google_signal_rss(topic: str, trending: list[dict] | None = None) -> dict:
+    """
+    RSS-only signal — no pytrends, no rate limiting, near-instant.
+    Fetches the trending list once if not provided (cached for 2 min).
+    """
+    if trending is None:
+        trending = fetch_trending_topics()
+
+    rss_result = _rss_signal_for_topic(topic, trending)
+    if rss_result:
+        return rss_result
+
+    return {
+        "topic": topic,
+        "failed": False,
+        "source": "rss_miss",
+        "current_mentions": 1.0,
+        "baseline_mentions": 1.0,
+        "velocity": 0.0,
+        "raw_values": [],
+        "growth_proxy": 0.0,
+    }
+
+
 def _failed_signal(topic: str, reason: str = "unknown") -> dict:
     return {
         "topic": topic,

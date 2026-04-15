@@ -3,9 +3,10 @@ Trends for Forum — FastAPI entrypoint.
 """
 
 import os
+import json
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from app.agent.orchestrator import run_agent, load_topics, run_from_forum_markets
 from app.sources.forum_api import get_all_markets
@@ -85,6 +86,47 @@ def get_ipo_rankings(
         "top_verdict": top["recommendation"] if top else None,
         "results": results,
     }
+
+
+@app.get("/ipo/trending/stream")
+def get_trending_stream(top_n: int = Query(default=12)):
+    """
+    SSE endpoint: streams one scored result per event as they finish.
+    Uses RSS-only signals — no pytrends, no rate limiting, near-instant.
+    """
+    from app.sources.google_trends import fetch_trending_topics, fetch_google_signal_rss
+    from app.agent.ipo_scorer import analyze_topic_ipo
+    from app.agent.recommender import recommend
+    from app.agent.summarizer import summarize_topic
+    from app.sources.forum_api import get_market_price
+
+    def generate():
+        trending = fetch_trending_topics()
+        topics = [t["title"] for t in trending[:top_n]]
+
+        if not topics:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'No trending topics found'})}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
+        yield f"data: {json.dumps({'type': 'meta', 'total': len(topics)})}\n\n"
+
+        for topic in topics:
+            google_signal = fetch_google_signal_rss(topic, trending)
+            forum_data = get_market_price(topic)
+            scored = analyze_topic_ipo(topic=topic, google_signal=google_signal, forum_data=forum_data)
+            scored["recommendation"] = recommend(**scored)
+            scored["explanation"] = summarize_topic(scored)
+            scored["type"] = "result"
+            yield f"data: {json.dumps(scored)}\n\n"
+
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/ipo/trending")

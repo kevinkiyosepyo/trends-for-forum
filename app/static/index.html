@@ -562,6 +562,39 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      padding: 10px 28px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+    .progress-label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--teal);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    /* Cards animate in */
+    .card { animation: fadeUp 0.25s ease both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -653,6 +686,12 @@
     <span class="stat-label">Top Pick</span>
     <span class="stat-value top" id="s-top">—</span>
   </div>
+</div>
+
+<!-- ── Progress bar (trending SSE) ── -->
+<div class="progress-bar-wrap" id="progress-wrap">
+  <div class="progress-label" id="progress-label">Loading trends...</div>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
 <!-- ── Content ── -->
@@ -897,22 +936,28 @@
 
   // ── Render ────────────────────────────────────────────────
 
+  let _activeSSE = null;
+
   function showLoading(text) {
     document.getElementById('loader-text').textContent = text || 'Scanning...';
     document.getElementById('loader').style.display = 'block';
     document.getElementById('grid').innerHTML = '';
     document.getElementById('status-dot').className = 'status-dot';
     document.getElementById('refresh-btn').textContent = '↻ Loading...';
+    document.getElementById('summary-bar').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
   }
 
   function showError(msg) {
     document.getElementById('loader').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
     document.getElementById('grid').innerHTML = `<div class="error-msg">⚠ ${msg}</div>`;
     document.getElementById('refresh-btn').textContent = '↻ Refresh';
   }
 
   function renderResults(results, topPick, isForum) {
     document.getElementById('loader').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
     document.getElementById('refresh-btn').textContent = '↻ Refresh';
     document.getElementById('status-dot').className = 'status-dot live';
     document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
@@ -925,10 +970,8 @@
       grid.innerHTML = '<div class="loading">No results returned.</div>';
       return;
     }
-
     grid.style.gridTemplateColumns = currentView === 'list'
       ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))';
-
     grid.innerHTML = sorted.map((r, i) =>
       isForum ? renderForumCard(r, i + 1) : renderTrendingCard(r, i + 1)
     ).join('');
@@ -945,7 +988,7 @@
   async function loadSignals() {
     const topics = getTopicsFromInput();
     if (!topics || !topics.length) return loadTrendingAnalysis();
-    showLoading('Analyzing topics via Google Trends...');
+    showLoading('Analyzing topics...');
     try {
       const url = '/ipo?' + topics.map(t => `topics=${encodeURIComponent(t)}`).join('&');
       const r   = await fetch(url);
@@ -955,14 +998,97 @@
     } catch(e) { showError(e.message); }
   }
 
-  async function loadTrendingAnalysis() {
-    showLoading("Loading today's top Google Trends...");
-    try {
-      const r    = await fetch('/ipo/trending?top_n=12');
-      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-      const data = await r.json();
-      renderResults(data.results || [], data.top_pick, false);
-    } catch(e) { showError(e.message); }
+  function loadTrendingAnalysis() {
+    // Cancel any existing SSE stream
+    if (_activeSSE) { _activeSSE.close(); _activeSSE = null; }
+
+    // Reset UI
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('grid').innerHTML = '';
+    document.getElementById('summary-bar').style.display = 'none';
+    document.getElementById('status-dot').className = 'status-dot';
+    document.getElementById('refresh-btn').textContent = '↻ Loading...';
+
+    const progressWrap = document.getElementById('progress-wrap');
+    const progressFill = document.getElementById('progress-fill');
+    const progressLabel = document.getElementById('progress-label');
+    progressWrap.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressLabel.textContent = 'Fetching trending topics...';
+
+    const grid = document.getElementById('grid');
+    grid.style.gridTemplateColumns = currentView === 'list'
+      ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))';
+
+    const results = [];
+    let total = 0;
+    let received = 0;
+
+    const es = new EventSource('/ipo/trending/stream?top_n=12');
+    _activeSSE = es;
+
+    es.onmessage = (e) => {
+      if (e.data === '[DONE]') {
+        es.close();
+        _activeSSE = null;
+        progressWrap.style.display = 'none';
+        document.getElementById('refresh-btn').textContent = '↻ Refresh';
+        document.getElementById('status-dot').className = 'status-dot live';
+        document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        // Final re-sort and summary
+        const sorted = sortByVerdict(results);
+        updateSummary(sorted, sorted[0]?.topic || null);
+        grid.innerHTML = sorted.map((r, i) =>
+          renderTrendingCard(r, i + 1)
+        ).join('');
+        return;
+      }
+
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+
+      if (msg.type === 'meta') {
+        total = msg.total;
+        progressLabel.textContent = `Analyzing 0 of ${total} trends...`;
+        return;
+      }
+
+      if (msg.type === 'error') {
+        showError(msg.message);
+        es.close();
+        return;
+      }
+
+      if (msg.type === 'result') {
+        received++;
+        results.push(msg);
+
+        // Update progress
+        const pct = total > 0 ? Math.round((received / total) * 100) : 0;
+        progressFill.style.width = pct + '%';
+        progressLabel.textContent = `Analyzing ${received} of ${total} trends...`;
+
+        // Append card immediately (unsorted — final sort happens on DONE)
+        const tmp = document.createElement('div');
+        tmp.innerHTML = renderTrendingCard(msg, received);
+        const card = tmp.firstElementChild;
+        grid.appendChild(card);
+
+        // Update summary counts live
+        updateSummary(results, results[0]?.topic || null);
+        document.getElementById('summary-bar').style.display = 'flex';
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+      _activeSSE = null;
+      if (!results.length) showError('Failed to load trending topics.');
+      else {
+        progressWrap.style.display = 'none';
+        document.getElementById('refresh-btn').textContent = '↻ Refresh';
+      }
+    };
   }
 
   async function loadForumStocks() {
@@ -987,6 +1113,9 @@
   function switchTab(tab) {
     activeTab = tab;
 
+    // Cancel any in-flight SSE stream
+    if (_activeSSE) { _activeSSE.close(); _activeSSE = null; }
+
     document.getElementById('tab-trending').className = 'tab-btn' + (tab === 'trending' ? ' active' : '');
     document.getElementById('tab-forum').className    = 'tab-btn' + (tab === 'forum' ? ' active' : '');
 
@@ -994,6 +1123,7 @@
     document.getElementById('trending-controls').style.display = isTrending ? 'flex'  : 'none';
     document.getElementById('forum-controls').style.display    = isTrending ? 'none'  : 'flex';
     document.getElementById('trending-bar').style.display      = isTrending ? 'flex'  : 'none';
+    document.getElementById('progress-wrap').style.display     = 'none';
 
     document.getElementById('summary-bar').style.display = 'none';
     document.getElementById('grid').innerHTML = '';
