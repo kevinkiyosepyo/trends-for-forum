@@ -218,6 +218,34 @@ def discover_from_forum(top_n: int = Query(default=10)):
     }
 
 
+@app.get("/ipo/deep/{topic}")
+def get_deep_analysis(topic: str):
+    """
+    Deep analysis for the detail page.
+    Re-scores the topic via RSS and generates a multi-section LLM breakdown.
+    """
+    from app.sources.google_trends import fetch_trending_topics, fetch_google_signal_rss
+    from app.agent.ipo_scorer import analyze_topic_ipo
+    from app.agent.recommender import recommend
+    from app.agent.summarizer import summarize_topic, deep_analyze_topic
+    from app.sources.forum_api import get_market_price
+
+    trending = fetch_trending_topics()
+    google_signal = fetch_google_signal_rss(topic, trending)
+    forum_data = get_market_price(topic)
+    scored = analyze_topic_ipo(topic=topic, google_signal=google_signal, forum_data=forum_data)
+    scored["recommendation"] = recommend(**scored)
+    scored["explanation"] = summarize_topic(scored)
+    sections = deep_analyze_topic(scored)
+
+    return {"scored": scored, "sections": sections}
+
+
+@app.get("/detail")
+def detail_page():
+    return FileResponse(os.path.join(_STATIC_DIR, "detail.html"))
+
+
 @app.get("/ipo/{topic}")
 def get_ipo_for_topic(topic: str):
     """Run IPO analysis for a single topic."""

@@ -589,7 +589,7 @@
     }
 
     /* Cards animate in */
-    .card { animation: fadeUp 0.25s ease both; }
+    .card { animation: fadeUp 0.25s ease both; cursor: pointer; }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -759,7 +759,7 @@
     const fcCls = forumChange > 0 ? 'green' : forumChange < 0 ? 'red' : '';
 
     return `
-    <div class="card verdict-${vClass}">
+    <div class="card verdict-${vClass}" onclick="window.location='/detail?topic=${encodeURIComponent(r.topic)}'">
       <div class="card-header">
         <div>
           <div class="topic-name">${r.topic}</div>
@@ -836,7 +836,7 @@
       .join('');
 
     return `
-    <div class="card verdict-${vClass}">
+    <div class="card verdict-${vClass}" onclick="window.location='/detail?topic=${encodeURIComponent(r.topic)}'">
       <div class="card-header">
         <div>
           <div class="topic-name">${r.topic}</div>

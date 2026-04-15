@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis — Trends for Forum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #fafafa;
+      --surface:    #ffffff;
+      --border:     #e5e7eb;
+      --border-2:   #d1d5db;
+      --text:       #111827;
+      --sub:        #6b7280;
+      --muted:      #9ca3af;
+      --green:      #16a34a;
+      --green-bg:   #f0fdf4;
+      --green-bd:   #bbf7d0;
+      --red:        #dc2626;
+      --red-bg:     #fef2f2;
+      --red-bd:     #fecaca;
+      --yellow:     #d97706;
+      --yellow-bg:  #fffbeb;
+      --yellow-bd:  #fde68a;
+      --blue:       #2563eb;
+      --blue-bg:    #eff6ff;
+      --blue-bd:    #bfdbfe;
+      --teal:       #0d9488;
+      --teal-bg:    #f0fdfa;
+      --teal-bd:    #99f6e4;
+      --radius:     12px;
+      --font:       'Inter', -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--sub);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.15s;
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .back-btn:hover { color: var(--text); border-color: var(--border-2); background: var(--bg); }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .logo-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: -0.02em;
+      margin-left: auto;
+      text-decoration: none;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .hero-left { flex: 1; }
+
+    .hero-topic {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .verdict-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
+    }
+    .badge-STRONG-BUY  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+    .badge-BUY         { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+    .badge-WATCH       { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-bd); }
+    .badge-AVOID       { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
+    .badge-INSUFFICIENT{ background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+    .stage-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .stage-Seed     { background: var(--green-bg); color: var(--green); }
+    .stage-SeriesA  { background: var(--blue-bg); color: var(--blue); }
+    .stage-PreIPO   { background: var(--yellow-bg); color: var(--yellow); }
+    .stage-Public   { background: var(--red-bg); color: var(--red); }
+
+    .hero-time { font-size: 12.5px; color: var(--muted); }
+
+    .hero-summary {
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--sub);
+      line-height: 1.7;
+    }
+
+    /* Score circle */
+    .score-circle {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--border);
+      flex-shrink: 0;
+    }
+    .score-circle.green { border-color: var(--green); background: var(--green-bg); }
+    .score-circle.yellow { border-color: var(--yellow); background: var(--yellow-bg); }
+    .score-circle.red { border-color: var(--red); background: var(--red-bg); }
+    .score-number {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .score-circle.green .score-number { color: var(--green); }
+    .score-circle.yellow .score-number { color: var(--yellow); }
+    .score-circle.red .score-number { color: var(--red); }
+    .score-label-sm {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .stat-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .stat-card-value {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .stat-card-value.green { color: var(--green); }
+    .stat-card-value.red   { color: var(--red); }
+    .stat-card-value.blue  { color: var(--blue); }
+    .stat-card-value.yellow { color: var(--yellow); }
+
+    /* ── Score breakdown ── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .section-body { padding: 20px; }
+
+    /* Score bars */
+    .breakdown-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .breakdown-row + .breakdown-row { border-top: 1px solid var(--border); }
+    .breakdown-label {
+      font-size: 12.5px;
+      color: var(--sub);
+      width: 120px;
+      flex-shrink: 0;
+    }
+    .breakdown-desc {
+      font-size: 11.5px;
+      color: var(--muted);
+      flex: 1;
+    }
+    .bar-track {
+      width: 120px;
+      height: 7px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.8s ease;
+    }
+    .bar-fill.green  { background: var(--green); }
+    .bar-fill.yellow { background: var(--yellow); }
+    .bar-fill.red    { background: var(--red); }
+    .bar-fill.muted  { background: var(--muted); }
+    .breakdown-num {
+      font-size: 13px;
+      font-weight: 700;
+      width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+    .penalty-num { color: var(--red); }
+
+    /* ── Analysis sections ── */
+    .analysis-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .analysis-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .analysis-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .analysis-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .analysis-body {
+      padding: 18px 20px;
+      font-size: 14px;
+      color: var(--sub);
+      line-height: 1.75;
+    }
+
+    /* Bottom line card */
+    .bottom-line-card {
+      background: var(--teal-bg);
+      border: 1px solid var(--teal-bd);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .bottom-line-icon { font-size: 22px; }
+    .bottom-line-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .bottom-line-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f766e;
+      line-height: 1.5;
+    }
+
+    /* ── Loading skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--border) 25%, var(--bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    .skeleton-line {
+      height: 14px;
+      margin-bottom: 10px;
+    }
+    .skeleton-line.short { width: 60%; }
+    .skeleton-line.medium { width: 80%; }
+    .skeleton-line.full { width: 100%; }
+
+    /* Source pills */
+    .source-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .source-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 5px;
+    }
+    .src-ok   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+    .src-stub { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-bd); }
+    .src-fail { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .hero { flex-direction: column; }
+      .score-circle { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <button class="back-btn" onclick="history.back()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Back
+  </button>
+  <span class="header-title" id="header-title">Loading...</span>
+  <a href="/" class="logo-text">Trends for Forum</a>
+</header>
+
+<div class="page" id="page">
+  <!-- Content injected by JS -->
+  <div id="skeleton">
+    <div class="hero">
+      <div class="hero-left" style="width:100%">
+        <div class="skeleton skeleton-line" style="width:45%;height:28px;margin-bottom:14px"></div>
+        <div class="skeleton skeleton-line medium"></div>
+        <div class="skeleton skeleton-line short"></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="skeleton skeleton-line" style="height:20px"></div></div>
+      <div class="stat-card"><div class="skeleton skeleton-line" style="height:20px"></div></div>
+      <div class="stat-card"><div class="skeleton skeleton-line" style="height:20px"></div></div>
+      <div class="stat-card"><div class="skeleton skeleton-line" style="height:20px"></div></div>
+    </div>
+    <div class="analysis-section">
+      <div class="analysis-header">
+        <div class="skeleton" style="width:120px;height:16px;border-radius:4px"></div>
+      </div>
+      <div class="analysis-body">
+        <div class="skeleton skeleton-line full"></div>
+        <div class="skeleton skeleton-line medium"></div>
+        <div class="skeleton skeleton-line short"></div>
+      </div>
+    </div>
+    <div class="analysis-section">
+      <div class="analysis-header">
+        <div class="skeleton" style="width:140px;height:16px;border-radius:4px"></div>
+      </div>
+      <div class="analysis-body">
+        <div class="skeleton skeleton-line full"></div>
+        <div class="skeleton skeleton-line medium"></div>
+      </div>
+    </div>
+  </div>
+  <div id="main-content" style="display:none"></div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const topic  = params.get('topic') || '';
+
+  if (!topic) {
+    window.location.href = '/';
+  }
+
+  document.getElementById('header-title').textContent = topic;
+  document.title = `${topic} — Trends for Forum`;
+
+  // ── Helpers ──────────────────────────────────────────────
+
+  function verdictClass(v) {
+    return 'badge-' + (v || 'WATCH').replace(/\s+/g, '-').toUpperCase();
+  }
+  function stageClass(s) {
+    return 'stage-' + (s || '').replace(' ', '');
+  }
+  function scoreColorClass(score) {
+    if (score >= 75) return 'green';
+    if (score >= 40) return 'yellow';
+    return 'red';
+  }
+  function barColor(score, max) {
+    const pct = score / max;
+    if (pct >= 0.7) return 'green';
+    if (pct >= 0.35) return 'yellow';
+    return 'red';
+  }
+  function fmtPct(v) {
+    if (v == null) return 'n/a';
+    return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  }
+  function srcClass(v) {
+    if (v === 'ok' || v === 'live') return 'src-ok';
+    if (v === 'stub') return 'src-stub';
+    return 'src-fail';
+  }
+  function srcLabel(k, v) {
+    const icons = { google: '📡', forum: '⚡' };
+    const icon = icons[k] || '';
+    if (v === 'ok' || v === 'live') return `${icon} ${k}`;
+    if (v === 'stub') return `${icon} ${k} (est.)`;
+    return `${icon} ${k} ✗`;
+  }
+
+  // ── Render ────────────────────────────────────────────────
+
+  function render(scored, sections) {
+    const v      = scored.recommendation || 'WATCH';
+    const score  = scored.ipo_score || 0;
+    const stage  = scored.stage || '?';
+    const hours  = scored.hours_since_emergence || '?';
+    const comp   = scored.score_components || {};
+    const colorCls = scoreColorClass(score);
+
+    const sourcePills = Object.entries(scored.source_health || {})
+      .map(([k, sv]) => `<span class="source-pill ${srcClass(sv)}">${srcLabel(k, sv)}</span>`)
+      .join('');
+
+    const growthColor = (scored.google_growth || 0) > 0 ? 'green' : 'red';
+    const changeColor = (scored.forum_change_pct || 0) > 0 ? 'green' : 'red';
+    const misColor    = (scored.mispricing || 0) > 0 ? 'green' : (scored.mispricing || 0) < 0 ? 'red' : '';
+    const misPfx      = (scored.mispricing || 0) >= 0 ? '+' : '';
+
+    document.getElementById('main-content').innerHTML = `
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="hero-topic">${scored.topic}</div>
+          <div class="hero-meta">
+            <span class="verdict-badge ${verdictClass(v)}">${v}</span>
+            <span class="stage-pill ${stageClass(stage)}">${stage}</span>
+            <span class="hero-time">~${hours}h since emergence</span>
+            ${scored.ticker ? `<span style="font-size:12px;color:var(--muted)">[${scored.ticker}]</span>` : ''}
+          </div>
+          <div class="hero-summary">${scored.explanation || ''}</div>
+          <div class="source-row">${sourcePills}</div>
+        </div>
+        <div class="score-circle ${colorCls}">
+          <span class="score-number">${score.toFixed(0)}</span>
+          <span class="score-label-sm">IPO Score</span>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">Google Trends</div>
+          <div class="stat-card-value ${growthColor}">${fmtPct(scored.google_growth)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Forum Price</div>
+          <div class="stat-card-value blue">${(scored.forum_price || 0).toFixed(0)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">24h Change</div>
+          <div class="stat-card-value ${changeColor}">${fmtPct(scored.forum_change_pct)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Mispricing</div>
+          <div class="stat-card-value ${misColor}">${misPfx}${(scored.mispricing || 0).toFixed(1)}</div>
+        </div>
+      </div>
+
+      <!-- Score breakdown -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon" style="background:var(--blue-bg)">📊</div>
+          <span class="section-title">Score Breakdown</span>
+        </div>
+        <div class="section-body">
+          ${breakdownRow('Growth', comp.growth_component, 50, 'Google Trends growth, log-scaled (max 50)')}
+          ${breakdownRow('Recency', comp.recency_component, 25, 'Earlier emergence = more upside potential (max 25)')}
+          ${breakdownRow('Mispricing', comp.mispricing_component, 15, 'Attention ahead of Forum price (max 15)')}
+          ${breakdownRow('Velocity', comp.velocity_component, 10, 'Rate of acceleration in interest (max 10)')}
+          ${penaltyRow('Saturation', comp.saturation_penalty, 10, 'Penalty for high price + weak growth')}
+        </div>
+      </div>
+
+      <!-- Deep analysis sections -->
+      ${analysisSection('🔍', 'What\'s Driving This', sections.driving_force, 'var(--blue-bg)')}
+      ${analysisSection('⚡', 'The Forum Opportunity', sections.forum_opportunity, 'var(--teal-bg)')}
+      ${analysisSection('⚠️', 'Risk Factors', sections.risks, 'var(--yellow-bg)')}
+
+      <!-- Bottom line -->
+      <div class="bottom-line-card">
+        <div class="bottom-line-icon">🎯</div>
+        <div>
+          <div class="bottom-line-label">Bottom Line</div>
+          <div class="bottom-line-text">${sections.bottom_line}</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('skeleton').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+    document.getElementById('header-title').textContent = scored.topic;
+  }
+
+  function breakdownRow(label, value, max, desc) {
+    const v   = value || 0;
+    const pct = Math.min(100, (v / max) * 100);
+    const col = barColor(v, max);
+    return `
+    <div class="breakdown-row">
+      <span class="breakdown-label">${label}</span>
+      <span class="breakdown-desc">${desc}</span>
+      <div class="bar-track"><div class="bar-fill ${col}" style="width:${pct}%"></div></div>
+      <span class="breakdown-num">${v.toFixed(1)}</span>
+    </div>`;
+  }
+
+  function penaltyRow(label, value, max, desc) {
+    const v   = value || 0;
+    const pct = Math.min(100, (v / max) * 100);
+    return `
+    <div class="breakdown-row">
+      <span class="breakdown-label">${label}</span>
+      <span class="breakdown-desc">${desc}</span>
+      <div class="bar-track"><div class="bar-fill red" style="width:${pct}%"></div></div>
+      <span class="breakdown-num penalty-num">−${v.toFixed(1)}</span>
+    </div>`;
+  }
+
+  function analysisSection(icon, title, text, iconBg) {
+    return `
+    <div class="analysis-section">
+      <div class="analysis-header">
+        <div class="analysis-icon" style="background:${iconBg}">${icon}</div>
+        <span class="analysis-title">${title}</span>
+      </div>
+      <div class="analysis-body">${text || '—'}</div>
+    </div>`;
+  }
+
+  // ── Fetch ────────────────────────────────────────────────
+
+  async function load() {
+    try {
+      const r = await fetch(`/ipo/deep/${encodeURIComponent(topic)}`);
+      if (!r.ok) throw new Error(`${r.status}`);
+      const data = await r.json();
+      render(data.scored, data.sections);
+    } catch(e) {
+      document.getElementById('skeleton').innerHTML =
+        `<div style="text-align:center;padding:60px;color:var(--red)">⚠ Failed to load analysis: ${e.message}</div>`;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
