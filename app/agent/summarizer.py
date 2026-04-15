@@ -260,7 +260,7 @@ def _deep_analyze_fallback(scored: dict) -> dict:
     if growth and growth > 100:
         driving = (f"{topic} is seeing a surge in Google search interest with {growth:.0f}% growth. "
                    f"This kind of spike typically signals a breaking news event, viral moment, or sudden cultural relevance. "
-                   f"{'The acceleration is still climbing, suggesting the peak hasn\\'t hit yet.' if velocity > 2 else 'The momentum appears to be in early stages.'}")
+                   + ("The acceleration is still climbing, suggesting the peak hasn't hit yet." if velocity > 2 else "The momentum appears to be in early stages."))
     elif growth and growth > 30:
         driving = (f"{topic} is building steady traction on Google Trends with {growth:.0f}% growth. "
                    f"This is organic interest accumulating rather than a single viral spike — "
