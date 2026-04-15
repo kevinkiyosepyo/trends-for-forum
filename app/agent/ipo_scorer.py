@@ -191,6 +191,8 @@ def analyze_topic_ipo(
     # ── Emergence timing ──────────────────────────────────────
     if not g_failed and google_signal.get("raw_values"):
         hours = estimate_emergence_hours(google_signal)
+    elif google_signal.get("emergence_hours") is not None:
+        hours = google_signal["emergence_hours"]
     elif forum_available:
         hours = _estimate_hours_from_forum(forum_data)
     else:
